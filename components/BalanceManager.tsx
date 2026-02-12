@@ -21,13 +21,16 @@ export function BalanceManager({ initialBalances, onUpdate }: { initialBalances:
         if (!newBalance.amount) return;
 
         setLoading(true);
+        const { data: { user } } = await supabase.auth.getUser();
+
         const { error } = await supabase
             .from('balances')
             .upsert({
                 month: `${newBalance.month}-01`,
                 category: newBalance.category,
-                amount: parseFloat(newBalance.amount)
-            }, { onConflict: 'month,category' });
+                amount: parseFloat(newBalance.amount),
+                user_id: user?.id
+            }, { onConflict: 'month,category,user_id' });
 
         if (!error) {
             setNewBalance({ ...newBalance, amount: '' });

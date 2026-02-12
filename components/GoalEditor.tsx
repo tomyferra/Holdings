@@ -14,11 +14,14 @@ export function GoalEditor({ goal, onUpdate }: { goal: Goal | null, onUpdate: ()
 
     const handleSave = async () => {
         setLoading(true);
+        const { data: { user } } = await supabase.auth.getUser();
+
         const { error } = await supabase
             .from('goals')
             .upsert({
                 id: goal?.id || undefined,
-                ...formData
+                ...formData,
+                user_id: user?.id
             });
 
         if (!error) {

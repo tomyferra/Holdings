@@ -5,12 +5,21 @@ import { supabase, Balance, Goal } from '@/lib/supabase';
 import { Dashboard } from '@/components/Dashboard';
 import { BalanceManager } from '@/components/BalanceManager';
 import { GoalEditor } from '@/components/GoalEditor';
-import { Wallet, Sparkles } from 'lucide-react';
+import { Wallet, Sparkles, LogOut } from 'lucide-react';
+import { useRouter } from 'next/navigation';
 
 export default function Home() {
   const [balances, setBalances] = useState<Balance[]>([]);
   const [goal, setGoal] = useState<Goal | null>(null);
   const [loading, setLoading] = useState(true);
+  const [user, setUser] = useState<any>(null);
+  const router = useRouter();
+
+  const handleSignOut = async () => {
+    await supabase.auth.signOut();
+    // Use window.location as it's more reliable for clearing all state
+    window.location.href = '/login';
+  };
 
   const fetchData = useCallback(async () => {
     const { data: bData } = await supabase
@@ -38,8 +47,18 @@ export default function Home() {
   }, []);
 
   useEffect(() => {
-    fetchData();
-  }, [fetchData]);
+    const getSession = async () => {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (user) {
+        console.log("Current User ID:", user.id);
+        setUser(user);
+        fetchData();
+      } else {
+        router.push('/login');
+      }
+    };
+    getSession();
+  }, [fetchData, router]);
 
   if (loading && balances.length === 0) {
     return (
@@ -66,7 +85,16 @@ export default function Home() {
               <p className="text-[10px] text-zinc-500 font-bold uppercase tracking-widest">Camino a Casa</p>
             </div>
           </div>
-          <GoalEditor goal={goal} onUpdate={fetchData} />
+          <div className="flex items-center gap-4">
+            <GoalEditor goal={goal} onUpdate={fetchData} />
+            <button
+              onClick={handleSignOut}
+              className="p-2 text-zinc-500 hover:text-white hover:bg-white/5 rounded-lg transition-all"
+              title="Cerrar sesión"
+            >
+              <LogOut size={20} />
+            </button>
+          </div>
         </div>
       </nav>
 
