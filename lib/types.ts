@@ -5,6 +5,7 @@ export interface Balance {
   month: string; // ISO format
   category: Category;
   amount: number;
+  created_at?: string;
   user_id?: string;
 }
 

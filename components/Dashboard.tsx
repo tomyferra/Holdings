@@ -43,7 +43,7 @@ export function Dashboard({ balances, targetAmount, targetDate }: DashboardProps
     const missing = Math.max(0, targetAmount - currentTotal);
 
     const now = new Date();
-    const target = new Date(targetDate);
+    const target = new Date(targetDate + 'T00:00:00');
     const monthsRemaining = (target.getFullYear() - now.getFullYear()) * 12 + (target.getMonth() - now.getMonth());
     const monthlyNeeded = monthsRemaining > 0 ? missing / monthsRemaining : 0;
 
@@ -87,7 +87,7 @@ export function Dashboard({ balances, targetAmount, targetDate }: DashboardProps
                     </div>
                     <div className="flex-1 min-w-0">
                         <p className="text-[10px] text-zinc-500 font-bold uppercase tracking-[0.2em] mb-1">Fecha Límite</p>
-                        <h3 className="text-2xl font-black text-white uppercase">{new Date(targetDate).toLocaleDateString('es', { month: 'short', year: 'numeric' })}</h3>
+                        <h3 className="text-2xl font-black text-white uppercase">{new Date(targetDate + 'T00:00:00').toLocaleDateString('es', { month: 'short', year: 'numeric' })}</h3>
                     </div>
                 </div>
             </div>

@@ -1,7 +1,7 @@
 'use client';
 
 import { useState } from 'react';
-import { Plus, X, ChevronDown, ChevronUp } from 'lucide-react';
+import { Plus, X, ChevronDown, ChevronUp, Trash2, Pencil } from 'lucide-react';
 import { supabase, Category, Balance } from '@/lib/supabase';
 
 const CATEGORIES: Category[] = ['Efectivo', 'Banco', 'Cripto', 'DolarApp', 'Broker'];
@@ -29,7 +29,8 @@ export function BalanceManager({ initialBalances, onUpdate }: { initialBalances:
                 month: `${newBalance.month}-01`,
                 category: newBalance.category,
                 amount: parseFloat(newBalance.amount),
-                user_id: user?.id
+                user_id: user?.id,
+                created_at: new Date().toISOString()
             }, { onConflict: 'month,category,user_id' });
 
         if (!error) {
@@ -38,6 +39,30 @@ export function BalanceManager({ initialBalances, onUpdate }: { initialBalances:
             setIsDialogOpen(false);
         }
         setLoading(false);
+    };
+
+    const handleDeleteMonth = async (month: string) => {
+        const monthLabel = new Date(month + '-01T00:00:00').toLocaleDateString('es', { month: 'long', year: 'numeric' });
+        if (!confirm(`¿Estás seguro de eliminar todos los registros de ${monthLabel}?`)) return;
+
+        setLoading(true);
+        const { error } = await supabase
+            .from('balances')
+            .delete()
+            .eq('month', `${month}-01`);
+
+        if (!error) onUpdate();
+        setLoading(false);
+    };
+
+    const handleEditMonth = (month: string) => {
+        setNewBalance({
+            ...newBalance,
+            month: month,
+            // We just open the dialog, the user can then pick category to update or we could pre-fill.
+            // For now, let's pre-set the month so the upsert works on the correct month.
+        });
+        setIsDialogOpen(true);
     };
 
     const grouped = initialBalances.reduce((acc, b) => {
@@ -120,12 +145,14 @@ export function BalanceManager({ initialBalances, onUpdate }: { initialBalances:
                     <table className="min-w-full divide-y divide-white/5">
                         <thead className="bg-white/[0.02]">
                             <tr>
-                                <th className="px-8 py-6 text-left text-xs font-bold text-zinc-500 uppercase tracking-widest">Periodo</th>
+                                <th className="px-4 py-6 text-left text-xs font-bold text-zinc-500 uppercase tracking-widest">Periodo</th>
+                                <th className="px-4 py-6 text-left text-xs font-bold text-zinc-500 uppercase tracking-widest">Actualización</th>
                                 {CATEGORIES.map(c => (
                                     <th key={c} className="px-6 py-6 text-left text-xs font-bold text-zinc-500 uppercase tracking-widest">{c}</th>
                                 ))}
-                                <th className="px-6 py-6 text-right text-xs font-bold text-zinc-500 uppercase tracking-widest">Total</th>
-                                <th className="px-8 py-6 text-right text-xs font-bold text-zinc-500 uppercase tracking-widest">Diferencia</th>
+                                <th className="px-4 py-6 text-right text-xs font-bold text-zinc-500 uppercase tracking-widest">Diferencia</th>
+                                <th className="px-4 py-6 text-right text-xs font-bold text-zinc-500 uppercase tracking-widest">Total</th>
+                                <th className="px-4 py-6 text-right text-xs font-bold text-zinc-500 uppercase tracking-widest">Acciones</th>
                             </tr>
                         </thead>
                         <tbody className="divide-y divide-white/5">
@@ -133,6 +160,11 @@ export function BalanceManager({ initialBalances, onUpdate }: { initialBalances:
                                 const actualIndex = sortedMonths.indexOf(month);
                                 const monthData = grouped[month];
                                 const total = Object.values(monthData).reduce((sum, b) => sum + b.amount, 0);
+                                const latestUpdate = Object.values(monthData).reduce((latest, b) => {
+                                    if (!b.created_at) return latest;
+                                    const d = new Date(b.created_at).getTime();
+                                    return d > latest ? d : latest;
+                                }, 0);
                                 const nextMonth = sortedMonths[actualIndex + 1];
                                 const prevTotal = nextMonth
                                     ? Object.values(grouped[nextMonth]).reduce((sum, b) => sum + b.amount, 0)
@@ -141,20 +173,24 @@ export function BalanceManager({ initialBalances, onUpdate }: { initialBalances:
 
                                 return (
                                     <tr key={month} className="group hover:bg-white/[0.01] transition-colors duration-200">
-                                        <td className="px-8 py-8 font-bold text-white text-lg capitalize">
-                                            {new Date(month + '-01').toLocaleDateString('es', { month: 'long', year: 'numeric' })}
+                                        <td className="px-4 py-8 font-bold text-white text-lg capitalize">
+                                            {new Date(month + '-01T00:00:00').toLocaleDateString('es', { month: 'long', year: 'numeric' })}
+                                        </td>
+                                        <td className="px-4 py-8">
+                                            <span className="text-zinc-500 text-sm">
+                                                {latestUpdate > 0
+                                                    ? new Date(latestUpdate).toLocaleDateString('es', { day: '2-digit', month: '2-digit', year: '2-digit' })
+                                                    : '—'}
+                                            </span>
                                         </td>
                                         {CATEGORIES.map(c => (
-                                            <td key={c} className="px-6 py-8">
+                                            <td key={c} className="px-4 py-8">
                                                 <span className="text-zinc-400 font-medium">
                                                     {monthData[c] ? `$${monthData[c].amount.toLocaleString()}` : '—'}
                                                 </span>
                                             </td>
                                         ))}
-                                        <td className="px-6 py-8 text-right font-black text-white text-xl">
-                                            ${total.toLocaleString()}
-                                        </td>
-                                        <td className="px-8 py-8 text-right font-bold">
+                                        <td className="px-4 py-8 text-right font-bold">
                                             {actualIndex < sortedMonths.length - 1 ? (
                                                 <div className={`flex items-center justify-end gap-2 ${delta >= 0 ? 'text-emerald-500' : 'text-red-500'}`}>
                                                     {delta >= 0 ? <ChevronUp size={18} /> : <ChevronDown size={18} />}
@@ -163,6 +199,27 @@ export function BalanceManager({ initialBalances, onUpdate }: { initialBalances:
                                             ) : (
                                                 <span className="text-zinc-600">—</span>
                                             )}
+                                        </td>
+                                        <td className="px-4 py-8 text-right font-black text-white text-xl">
+                                            ${total.toLocaleString()}
+                                        </td>
+                                        <td className="px-4 py-8 text-right">
+                                            <div className="flex justify-end gap-2">
+                                                <button
+                                                    onClick={() => handleEditMonth(month)}
+                                                    className="p-2 text-zinc-500 hover:text-indigo-400 hover:bg-indigo-500/10 rounded-lg transition-all"
+                                                    title="Editar mes"
+                                                >
+                                                    <Pencil size={18} />
+                                                </button>
+                                                <button
+                                                    onClick={() => handleDeleteMonth(month)}
+                                                    className="p-2 text-zinc-500 hover:text-red-400 hover:bg-red-500/10 rounded-lg transition-all"
+                                                    title="Eliminar mes completo"
+                                                >
+                                                    <Trash2 size={18} />
+                                                </button>
+                                            </div>
                                         </td>
                                     </tr>
                                 );
