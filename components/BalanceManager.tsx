@@ -4,7 +4,7 @@ import { useState } from 'react';
 import { Plus, X, ChevronDown, ChevronUp, Trash2, Pencil } from 'lucide-react';
 import { supabase, Category, Balance } from '@/lib/supabase';
 
-const CATEGORIES: Category[] = ['Efectivo', 'Banco', 'Cripto', 'DolarApp', 'Broker'];
+const CATEGORIES: Category[] = ['Efectivo', 'Banco', 'Cripto', 'DolarApp', 'Broker', 'Ahorro Juntos'];
 
 export function BalanceManager({ initialBalances, onUpdate }: { initialBalances: Balance[], onUpdate: () => void }) {
     const [loading, setLoading] = useState(false);

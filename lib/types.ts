@@ -1,4 +1,4 @@
-export type Category = 'Efectivo' | 'Banco' | 'Cripto' | 'DolarApp' | 'Broker';
+export type Category = 'Efectivo' | 'Banco' | 'Cripto' | 'DolarApp' | 'Broker' | 'Ahorro Juntos';
 
 export interface Balance {
   id: string;
