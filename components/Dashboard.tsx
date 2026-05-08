@@ -41,6 +41,8 @@ export function Dashboard({ balances, targetAmount, targetDate }: DashboardProps
 
     const currentTotal = chartData.length > 0 ? chartData[chartData.length - 1].total : 0;
     const missing = Math.max(0, targetAmount - currentTotal);
+    const percentageAchieved = targetAmount > 0 ? (currentTotal / targetAmount) * 100 : 0;
+    const percentageMissing = 100 - percentageAchieved;
 
     const now = new Date();
     const target = new Date(targetDate + 'T00:00:00');
@@ -50,7 +52,7 @@ export function Dashboard({ balances, targetAmount, targetDate }: DashboardProps
     return (
         <div className="space-y-12 w-full">
             {/* Stats Row */}
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6 w-full">
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-6 w-full">
                 <div className="glass-card flex items-center gap-6 p-6 w-full">
                     <div className="p-4 bg-emerald-500/10 rounded-2xl">
                         <TrendingUp className="text-emerald-500" size={24} />
@@ -88,6 +90,32 @@ export function Dashboard({ balances, targetAmount, targetDate }: DashboardProps
                     <div className="flex-1 min-w-0">
                         <p className="text-[10px] text-zinc-500 font-bold uppercase tracking-[0.2em] mb-1">Fecha Límite</p>
                         <h3 className="text-2xl font-black text-white uppercase">{new Date(targetDate + 'T00:00:00').toLocaleDateString('es', { month: 'short', year: 'numeric' })}</h3>
+                    </div>
+                </div>
+
+                <div className="glass-card p-6 w-full">
+                    <p className="text-[10px] text-zinc-500 font-bold uppercase tracking-[0.2em] mb-4">Progreso</p>
+                    <div className="space-y-3">
+                        <div className="flex items-center justify-between">
+                            <span className="text-xs font-semibold text-emerald-400">Logrado</span>
+                            <span className="text-xl font-black text-emerald-500">{percentageAchieved.toFixed(1)}%</span>
+                        </div>
+                        <div className="h-2 bg-white/5 rounded-full overflow-hidden">
+                            <div 
+                                className="h-full bg-gradient-to-r from-emerald-500 to-emerald-400 rounded-full transition-all duration-500"
+                                style={{ width: `${percentageAchieved}%` }}
+                            />
+                        </div>
+                        <div className="flex items-center justify-between pt-2">
+                            <span className="text-xs font-semibold text-red-400">Faltante</span>
+                            <span className="text-xl font-black text-red-500">{percentageMissing.toFixed(1)}%</span>
+                        </div>
+                        <div className="h-2 bg-white/5 rounded-full overflow-hidden">
+                            <div 
+                                className="h-full bg-gradient-to-r from-red-500 to-red-400 rounded-full transition-all duration-500"
+                                style={{ width: `${percentageMissing}%` }}
+                            />
+                        </div>
                     </div>
                 </div>
             </div>
