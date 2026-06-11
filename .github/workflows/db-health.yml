@@ -15,7 +15,7 @@ jobs:
         run: |
           curl -X GET \
             -H "apikey: $SUPA_KEY" \
-            -H "Authorization: Bearer $SUPA_KEY"
+            -H "Authorization: Bearer $SUPA_KEY" \
             https://xnroglnskuswyiqaadfb.supabase.co/rest/v1/goals?select=* \
         env:
           SUPA_KEY: ${{ secrets.SUPA_KEY }}
